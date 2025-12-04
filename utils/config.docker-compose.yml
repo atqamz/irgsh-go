@@ -2,7 +2,7 @@
 redis: 'redis://redis:6379'
 
 chief:
-  address: 'http://localhost:8080'
+  address: 'http://chief:8080'
   workdir: '/var/lib/irgsh/chief'
   gnupg_dir: '/var/lib/irgsh/gnupg'
 
@@ -46,7 +46,7 @@ iso:
   kernel_amd64: linux-image-4.9.0-3-amd64
   squashfs: squashfs-tools
   cdvolume: blankon
-  live_packages: ''
+
   live_system: live
   live_packages: 'live-boot live-config blankon-live-config blankon-repository-setup blankon-installer gparted'
   max_size: 1000
