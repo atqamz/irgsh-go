@@ -18,7 +18,6 @@ RUN apt-get update && apt-get install -y \
     lsb-release \
     docker.io \
     vim \
-    redis-server \
     && rm -rf /var/lib/apt/lists/*
 
 ARG GO_VERSION=1.13.15
@@ -29,5 +28,8 @@ RUN wget https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz && \
 ENV PATH=$PATH:/usr/local/go/bin
 
 WORKDIR ${PROJECT_PATH:-/app}
+
+COPY go.mod go.sum ./
+RUN go mod download
 
 EXPOSE 8080 8081 8082

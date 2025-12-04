@@ -1,18 +1,88 @@
 services:
-  dev:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  chief:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:${PROJECT_PATH:-/app}
+      - ${HOME}/.gnupg:/root/.gnupg
+      - go_build_cache:/root/.cache/go-build
+    working_dir: ${PROJECT_PATH:-/app}
+    command: make chief
+    environment:
+      - DEV=1
+      - PORT=8080
+      - IRGSH_CONFIG_PATH=${PROJECT_PATH:-/app}/utils/config.docker-compose.yml
+    ports:
+      - "18080:8080"
+    depends_on:
+      - redis
+
+  builder:
     build:
       context: .
       dockerfile: Dockerfile.dev
     volumes:
       - .:${PROJECT_PATH:-/app}
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME}/.gnupg:/root/.gnupg
+      - go_build_cache:/root/.cache/go-build
     working_dir: ${PROJECT_PATH:-/app}
-    command: sh -c "service redis-server start && tail -f /dev/null"
+    command: make builder
     environment:
       - DEV=1
-      - IRGSH_CONFIG_PATH=${PROJECT_PATH:-/app}/utils/config.docker.yml
+      - PORT=8081
+      - IRGSH_CONFIG_PATH=${PROJECT_PATH:-/app}/utils/config.docker-compose.yml
     privileged: true
     ports:
-      - "18080:8080"
       - "18081:8081"
+    depends_on:
+      - redis
+      - chief
+
+  repo:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:${PROJECT_PATH:-/app}
+      - ${HOME}/.gnupg:/root/.gnupg
+      - go_build_cache:/root/.cache/go-build
+    working_dir: ${PROJECT_PATH:-/app}
+    command: make repo
+    environment:
+      - DEV=1
+      - PORT=8082
+      - IRGSH_CONFIG_PATH=${PROJECT_PATH:-/app}/utils/config.docker-compose.yml
+    ports:
       - "18082:8082"
+    depends_on:
+      - redis
+      - chief
+
+  cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:${PROJECT_PATH:-/app}
+      - ${HOME}/.gnupg:/root/.gnupg
+      - go_build_cache:/root/.cache/go-build
+    working_dir: ${PROJECT_PATH:-/app}
+    command: tail -f /dev/null
+    environment:
+      - DEV=1
+      - IRGSH_CONFIG_PATH=${PROJECT_PATH:-/app}/utils/config.docker-compose.yml
+    depends_on:
+      - chief
+
+volumes:
+  redis_data:
+  go_build_cache:
